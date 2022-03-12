@@ -1,0 +1,6 @@
+%import common.WS
+%ignore WS
+
+%import .program.program
+
+start: program
