@@ -1,9 +1,0 @@
-function: ID "::" ID "->" ID cases*
-entry: "Start" "=" ID PARAM*
-
-cases: ID PARAM "=" REST
-
-PARAM: /([a-zA-Z0-9]+)|_/
-REST: /.+/
-
-ID: /[a-zA-Z]+/

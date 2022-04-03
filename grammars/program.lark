@@ -1,8 +1,0 @@
-program: module imports* statements*
-
-module: "module" ID
-imports: "import" ID
-statements: function
-          | entry
-
-%import .rest (function, entry, ID)

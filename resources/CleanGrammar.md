@@ -206,9 +206,3 @@ T_ID            -> id
 T_REST          -> rest
 T_NUM           -> num
 ```
-
-5 + 9 ( 5 * 3 ) / 4 ^ 4
-
-if (a == 1 or 2)
-
-if (a == 2 or 1 )

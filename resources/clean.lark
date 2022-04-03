@@ -1,0 +1,242 @@
+start           : indents program indents
+
+program         : module import* declaration+
+
+module          : T_MODULE indents T_ID indents
+import          : T_IMPORT indents T_ID indents
+declaration     : function_decl indents
+                | instance_decl indents
+                | type_decl indents
+                | object_decl indents
+                | variable indents
+
+entry           : T_START indents T_ASSIGN indents expression
+
+function_decl   : header? function indents footer?
+function        : T_ID indents param_decl_val+ indents (case indents)* T_ASSIGN indents expression
+                | entry
+
+variable        : T_ID indents T_ASSIGN indents expression
+
+instance_decl   : instance indents (footer indents)?
+instance        : T_INSTANCE indents operator indents type indents (instance_case indents)*
+                | T_INSTANCE indents T_ID indents type indents (instance_case indents)*
+instance_case   : T_BAR indents operator indents type
+                | T_BAR indents T_ID indents type
+
+type_decl       : T_DOUBLE_COLON indents? T_ID indents? type* indents T_ASSIGN indents type+ indents (guard indents)*
+                | T_DOUBLE_COLON indents? T_ID indents? type* indents T_ALIAS indents type+ indents (T_RIGHT_ARROW indents type indents)? (guard indents)*
+types           : type (indents T_COMMA indents type)*
+type            : T_INT
+                | T_REAL
+                | T_BOOL
+                | T_ID
+                | T_STRING
+                | T_CHAR
+                | tuple_type
+                | list_type
+                | array_type
+                | tree_type
+                | type T_RIGHT_ARROW indents type
+                | T_OPEN indents type indents T_CLOSE
+
+object_decl     : T_ID T_DOUBLE_COLON type+
+
+header          : T_ID indents T_DOUBLE_COLON indents type+ indents T_RIGHT_ARROW indents type indents
+footer          : T_WHERE indents statement+ indents
+
+case            : T_BAR indents expression indents T_ASSIGN indents expression
+
+statement       : T_ID indents T_ASSIGN indents expression T_NEWLINE+
+                | operator indents statement_val indents statement_val indents T_ASSIGN indents expression T_NEWLINE+
+statement_val   : T_ID
+                | tree_type
+                | T_WILDCARD
+
+tuple_type      : T_OPEN indents? types indents T_CLOSE
+tuple           : T_OPEN tuple_vals T_CLOSE
+tuple_vals      : expression (T_COMMA expression)+
+
+tuple_param     : T_OPEN param_decl_val (T_COMMA expression)+ T_CLOSE
+
+list_type       : T_SOPEN type T_SCLOSE
+list            : T_SOPEN (list_vals (T_DOT_DOT expression?)?)? T_SCLOSE
+                | T_SOPEN expression T_COMP comprehension guard? T_SCLOSE
+list_vals       : expression (T_COMMA expression)* (T_COLON expression)*
+
+list_param      : T_SOPEN (list_param_vals (T_DOT_DOT param_decl_val?)?)? T_SCLOSE
+list_param_vals : param_decl_val (T_COMMA param_decl_val)* (T_COLON param_decl_val)*
+
+array_type      : T_COPEN indents array_type_vals T_CCLOSE
+array_type_vals : array_type_val (indents T_COMMA indents array_type_val)* indents
+array_type_val  : T_ID indents T_DOUBLE_COLON indents type
+                | type
+
+array           : T_COPEN indents (array_vals indents)? T_CCLOSE
+                | T_COPEN indents expression indents T_COMP indents comprehension indents guard? indents T_CCLOSE
+array_vals      : array_val (indents T_COMMA indents array_val)* indents
+array_val       : expression indents T_ASSIGN indents expression
+                | expression
+
+array_param     : T_COPEN indents (array_param_vals indents)? T_CCLOSE
+array_param_vals: array_val (indents T_COMMA indents array_param_val)*
+array_param_val : T_ID indents T_ASSIGN indents param_decl_val
+                | param_decl_val
+
+comprehension   : comp_val indents comp_feed indents comp_feeder (indents T_CONT indents comp_val indents comp_feed indents comp_feeder)*
+comp_val        : T_ID 
+                | tuple
+                | function_call
+comp_feed       : T_LIST_FEED
+                | T_ARRAY_FEED
+comp_feeder     : T_ID
+                | list
+                | array
+guard           : T_BAR indents expression
+
+tree_type       : T_OPEN T_ID type+ T_CLOSE
+
+tree_param      : T_OPEN T_ID tree_param_node+ T_CLOSE
+tree_param_node : param_decl_val
+                | T_OPEN tree_param T_CLOSE
+
+param_decl_val  : T_WILDCARD
+                | T_ID
+                | T_STRING
+                | T_TRUE
+                | T_FALSE
+                | T_STRING_LIT
+                | T_CHAR_LIT
+                | T_INT_LIT
+                | T_REAL_LIT
+                | tuple_param
+                | list_param
+                | array_param
+                | tree_param
+
+param           : expression
+                | T_OPEN operator T_CLOSE
+                | T_OPEN T_OPEN logic_operator T_CLOSE expression T_CLOSE
+
+function_call   : expression param+
+                | T_ABORT T_STRING_LIT
+lambda_function : T_OPEN T_LAMBDA param+ T_ASSIGN expression T_CLOSE
+
+expression      : T_ID
+                | T_STRING
+                | T_TRUE
+                | T_FALSE
+                | T_STRING_LIT
+                | T_CHAR_LIT
+                | T_INT_LIT
+                | T_REAL_LIT
+                | tuple
+                | list
+                | array
+                | function_call
+                | lambda_function
+                | T_OPEN expression T_CLOSE
+                | T_OPEN operator T_CLOSE expression
+                | expression operator expression
+                | T_ID T_DOT T_ID
+                | T_COMPOSITION param+
+
+operator        : T_PLUS
+                | T_MINUS
+                | T_MUL
+                | T_DIV
+                | T_POW
+                | T_MOD
+                | T_REM
+                | T_BITOR
+                | T_BITAND
+                | T_BITXOR
+                | T_LIST_CONCAT
+                | T_STR_CONCAT
+                | T_INDEX
+                | logic_operator
+
+logic_operator  : T_EQ
+                | T_NEQ
+                | T_AND
+                | T_OR
+                | T_GT
+                | T_LT
+                | T_GE
+                | T_LE
+
+indents         : T_NEWLINE* (_INDENT | _DEDENT+)?
+
+T_MODULE        : "module"
+T_IMPORT        : "import"
+T_START         : "Start"
+T_ABORT         : "abort"
+T_WHERE         : "where"
+T_INSTANCE      : "instance"
+T_BOOL          : "Bool"
+T_TRUE          : "True"
+T_FALSE         : "False"
+T_INT           : "Int"
+T_REAL          : "Real"
+T_STRING        : "String"
+T_CHAR          : "Char"
+T_COLON         : ":"
+T_DOUBLE_COLON  : "::"
+T_ASSIGN        : "="
+T_ALIAS         : ":=="
+T_RIGHT_ARROW   : "->"
+T_LIST_FEED     : "<-"
+T_ARRAY_FEED    : "<-:"
+T_OPEN          : "("
+T_CLOSE         : ")"
+T_SOPEN         : "["
+T_SCLOSE        : "]"
+T_COPEN         : "{"
+T_CCLOSE        : "}"
+T_COMMA         : ","
+T_BAR           : "|"
+T_EQ            : "=="
+T_NEQ           : "<>"
+T_GT            : ">"
+T_LT            : "<"
+T_GE            : ">="
+T_LE            : "<="
+T_AND           : "&&"
+T_OR            : "||"
+T_PLUS          : "+"
+T_MINUS         : "-"
+T_MUL           : "*"
+T_DIV           : "/"
+T_POW           : "^"
+T_MOD           : "mod"
+T_REM           : "rem"
+T_BITOR         : "bitor"
+T_BITAND        : "bitand"
+T_BITXOR        : "bitxor"
+T_LIST_CONCAT   : "++"
+T_STR_CONCAT    : "+++"
+T_DOT           : "."
+T_DOT_DOT       : ".."
+T_LAMBDA        : "\\"
+T_COMP          : "\\\\"
+T_CONT          : "&"
+T_INDEX         : "!!"
+T_COMPOSITION   : "o"
+T_WILDCARD      : "_"
+
+T_ID            : /[a-zA-Z][a-zA-Z0-9_]*/
+T_INT_LIT       : /[~+-]?[0-9]+/
+T_REAL_LIT      : /[~+-]?[0-9]+\.[0-9]+/
+T_STRING_LIT    : /\"[^"]+\"/
+T_CHAR_LIT      : /\'.\'/
+
+T_NEWLINE       : /(\r?\n[\t ]*)+/
+T_WHITESPACE    : /[ \t]+/
+T_LINE_COMMENT  : /\/\/.*/
+T_MULTI_COMMENT : /\/\*([^*]|(\*+[^\/]))*\*+\//
+
+%ignore T_WHITESPACE
+%ignore T_LINE_COMMENT
+%ignore T_MULTI_COMMENT
+
+%declare _INDENT _DEDENT
