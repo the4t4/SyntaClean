@@ -1,10 +1,10 @@
 import os, sys
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 import unittest
 from unittest import TestCase
 
-from main import parser
+from clean_parser.parser import parser, TokenRemover
 
 directory = "tests\\resources"
 
@@ -20,4 +20,10 @@ class TestParser(TestCase):
             f.close()
 
 if __name__ == '__main__':
-    unittest.main()
+    if len(sys.argv) == 1:
+        unittest.main()
+    else:
+        f = open(sys.argv[1])
+        tree = parser.parse(f.read())
+        TokenRemover().transform(tree)
+        print(tree.pretty())

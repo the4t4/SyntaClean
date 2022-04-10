@@ -225,8 +225,8 @@ T_COMPOSITION   : "o"
 T_WILDCARD      : "_"
 
 T_ID            : /[a-zA-Z][a-zA-Z0-9_]*/
-T_INT_LIT       : /((?!\s)[~+-])?[0-9]+/
-T_REAL_LIT      : /((?!\s)[~+-])?[0-9]+\.[0-9]+/
+T_INT_LIT       : /((?<!\w)[~+-])?[0-9]+/
+T_REAL_LIT      : /((?<!\w)[~+-])?[0-9]+\.[0-9]+/
 T_STRING_LIT    : /\"[^"]+\"/
 T_CHAR_LIT      : /\'.\'/
 
