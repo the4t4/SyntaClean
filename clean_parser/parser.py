@@ -1,7 +1,7 @@
 from distutils.log import debug
 import logging
 
-from lark import Lark, logger
+from lark import Lark, tree, logger
 from lark.indenter import Indenter
 from lark.visitors import Transformer_InPlace, Discard
 
@@ -22,3 +22,9 @@ class TokenRemover(Transformer_InPlace):
         return Discard
 
 parser = Lark.open("grammars/clean.lark", rel_to=__file__, parser="lalr", postlex=FooterIndenter(), debug=False)
+
+def make_png(parsedTree, filename):
+    tree.pydot__tree_to_png(parsedTree, filename)
+
+def make_dot(parsedTree, filename):
+    tree.pydot__tree_to_dot(parsedTree, filename)

@@ -4,6 +4,6 @@ tags
 .vscode
 .ropeproject
 .cache
-/dist
-/build
-
+**/dist
+**/build
+*.png
