@@ -49,6 +49,7 @@ case            : T_BAR indents expression indents T_ASSIGN indents expression
 
 statement       : T_ID indents T_ASSIGN indents expression T_NEWLINE+
                 | operator indents statement_val indents statement_val indents T_ASSIGN indents expression T_NEWLINE+
+                | indents footer indents
 statement_val   : T_ID
                 | tree_type
                 | T_WILDCARD

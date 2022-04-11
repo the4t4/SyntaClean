@@ -11,5 +11,7 @@ if __name__ == "__main__":
     f2 = open(sys.argv[2])
     tree1 = parser.parse(f1.read())
     tree2 = parser.parse(f2.read())
+    TokenRemover().transform(tree1)
+    TokenRemover().transform(tree2)
     result = naiveCheck(tree1, tree2)
     print(result)
