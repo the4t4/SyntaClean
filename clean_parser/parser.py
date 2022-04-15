@@ -15,13 +15,13 @@ class FooterIndenter(Indenter):
     DEDENT_type = '_DEDENT'
     tab_len = 4
 
-class TokenRemover(Transformer_InPlace):
+class WhitespaceRemover(Transformer_InPlace):
     def T_NEWLINE(self, token):
         return Discard
     def indents(self, token):
         return Discard
 
-parser = Lark.open("grammars/clean.lark", rel_to=__file__, parser="lalr", postlex=FooterIndenter(), debug=False)
+parser = Lark.open("grammars/clean.lark", rel_to=__file__, parser="lalr", postlex=FooterIndenter(), propagate_positions=True, debug=False)
 
 def make_png(parsedTree, filename):
     tree.pydot__tree_to_png(parsedTree, filename)

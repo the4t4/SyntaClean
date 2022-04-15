@@ -1,7 +1,9 @@
 import sys
 
-from clean_parser.parser import parser, TokenRemover
+from clean_parser.parser import parser, WhitespaceRemover
 from plagiarism_checker.checker import naiveCheck
+from plagiarism_checker.abstraction import AbstractionLevel, applyAbstr
+
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
@@ -11,7 +13,9 @@ if __name__ == "__main__":
     f2 = open(sys.argv[2])
     tree1 = parser.parse(f1.read())
     tree2 = parser.parse(f2.read())
-    TokenRemover().transform(tree1)
-    TokenRemover().transform(tree2)
+    WhitespaceRemover().transform(tree1)
+    WhitespaceRemover().transform(tree2)
+    tree1 = applyAbstr(tree1, AbstractionLevel.COMPLETE)
+    tree2 = applyAbstr(tree2, AbstractionLevel.COMPLETE)
     result = naiveCheck(tree1, tree2)
     print(result)
