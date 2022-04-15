@@ -1,8 +1,10 @@
 import sys
 
-from clean_parser.parser import parser, WhitespaceRemover
+from hashlib import md5
+
+from clean_parser.parser import CleanParser
+from clean_parser.abstraction import AbstractionLevel
 from plagiarism_checker.checker import naiveCheck
-from plagiarism_checker.abstraction import AbstractionLevel, applyAbstr
 
 
 if __name__ == "__main__":
@@ -11,11 +13,10 @@ if __name__ == "__main__":
         sys.exit(2)
     f1 = open(sys.argv[1])
     f2 = open(sys.argv[2])
+    parser = CleanParser(abstractionLevel=AbstractionLevel.SIMPLE)
     tree1 = parser.parse(f1.read())
     tree2 = parser.parse(f2.read())
-    WhitespaceRemover().transform(tree1)
-    WhitespaceRemover().transform(tree2)
-    tree1 = applyAbstr(tree1, AbstractionLevel.COMPLETE)
-    tree2 = applyAbstr(tree2, AbstractionLevel.COMPLETE)
+    print(md5(repr(tree1).encode('ASCII')).digest())
+    print(md5(repr(tree2).encode('ASCII')).digest())
     result = naiveCheck(tree1, tree2)
     print(result)

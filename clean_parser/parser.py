@@ -5,6 +5,8 @@ from lark import Lark, tree, logger
 from lark.indenter import Indenter
 from lark.visitors import Transformer_InPlace, Discard
 
+from clean_parser.abstraction import AbstractionLevel, applyAbstr
+
 logger.setLevel(logging.DEBUG)
 
 class FooterIndenter(Indenter):
@@ -21,10 +23,27 @@ class WhitespaceRemover(Transformer_InPlace):
     def indents(self, token):
         return Discard
 
-parser = Lark.open("grammars/clean.lark", rel_to=__file__, parser="lalr", postlex=FooterIndenter(), propagate_positions=True, debug=False)
+class CleanParser():
+    def __init__(self, parser="lalr", abstractionLevel=AbstractionLevel.NONE, propagate_positions=True, debug=False, logLevel=logging.DEBUG):
+        self.parser = Lark.open(
+            grammar_filename="grammars/clean.lark",
+            rel_to=__file__,
+            parser=parser,
+            postlex=FooterIndenter(),
+            propagate_positions=propagate_positions,
+            debug=debug
+        )
+        self.abstractionLevel=abstractionLevel
+        logger.setLevel(logLevel)
 
-def make_png(parsedTree, filename):
-    tree.pydot__tree_to_png(parsedTree, filename)
+    def parse(self, text):
+        tree = self.parser.parse(text)
+        WhitespaceRemover().transform(tree)
+        applyAbstr(tree, self.abstractionLevel)
+        return tree
+    
+    def make_png(self, parsedTree, file):
+        tree.pydot__tree_to_png(parsedTree, file)
 
-def make_dot(parsedTree, filename):
-    tree.pydot__tree_to_dot(parsedTree, filename)
+    def make_dot(self, parsedTree, file):
+        tree.pydot__tree_to_dot(parsedTree, file)
