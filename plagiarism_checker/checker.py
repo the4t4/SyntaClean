@@ -1,49 +1,76 @@
 from lark.lexer import Token
 from hashlib import md5
 
-from plagiarism_checker.fingerprint import Fingerprint, idGenerator
+from plagiarism_checker.fingerprint import Fingerprint
+from plagiarism_checker.utils import treeSize, idGenerator
 
-def naiveCheck(tree1, tree2):
-    return tree1 == tree2
+class PlagiarismCheker():
+    def __init__(self, hashTable = {}, collisions = {}):
+        self.hashTable = hashTable
+        self.collisions = collisions
+        self.results = []
+        self.weights = []
+        self.__size = 0
 
-def collisionCheck(tree1, tree2):
-    hashTable = {}
-    collisions = {}
-    hashTree(tree1, next(idGenerator), hashTable, collisions)
-    hashTree(tree2, next(idGenerator), hashTable, collisions)
-    size1 = treeSize(tree1)
-    size2 = treeSize(tree2)
-    collidedSize1 = 0
-    collidedSize2 = 0
-    for key, vals in collisions.items():
-        if len(vals[0]) != 0 and len(vals[1]) != 0:
-            collidedSize1 += sum(a.weight for a in vals[0])
-            collidedSize2 += sum(a.weight for a in vals[1])
-    return (collidedSize1/size1, collidedSize2/size2)
+    def check(self, *trees):
+        n = len(trees)
+        self.__size += n
+        collidedWeights = [0] * self.__size
+        self.results = []
+        self.updateCollisionSize(n)
 
-def hashTree(tree, id, hashTable, collisions):
-    hash = md5(repr(tree).encode('ASCII')).digest()
-    fingerprint = Fingerprint(id, treeSize(tree), tree)
-    if hashTable.get(hash) != None:
-        if collisions.get(hash) != None:
-            collisions.get(hash)[id].append(fingerprint)
+        for tree in trees:
+            id = next(idGenerator)   
+            self.hashTree(tree, id)
+            self.weights.append(treeSize(tree))
+
+        for key, vals in self.collisions.items():
+            maxCollisions = min(len(val) for val in vals)
+            for i in range(self.__size):
+                if len(vals[i]) != 0:
+                    collidedWeight = vals[i][0].weight * maxCollisions
+                    collidedWeights[i] += collidedWeight
+
+        for i in range(self.__size):
+            self.results.append(collidedWeights[i]/self.weights[i])
+
+        return self.results
+
+    def hashTree(self, tree, id):
+        hash = md5(repr(tree).encode('ASCII')).digest()
+        fingerprint = Fingerprint(id, treeSize(tree), tree)
+        collided = self.addTreeHash(hash, fingerprint)
+        if not collided:
+            for subtree in tree.children:
+                if type(subtree) != Token:
+                    self.hashTree(subtree, id)
+
+    def addTreeHash(self, key, value):
+        if self.hashTable.get(key) != None:
+            self.addCollision(key, value)
+            return True
         else:
-            list = [ [] for _ in range(2) ]
-            list[hashTable.get(hash).id].append(hashTable.get(hash))
-            list[id].append(fingerprint)
-            collisions.update({hash:list})
-    else:
-        hashTable.update({hash:fingerprint})
-        for subtree in tree.children:
-            if type(subtree) != Token:
-                hashTree(subtree, id, hashTable, collisions)
+            self.hashTable.update({key:value})
+            return False
 
-def treeSize(tree):
-    iter = tree.iter_subtrees()
-    sum = 0
-    for subtree in iter:
-        sum += 1
-        for child in subtree.children:
-            if type(child) == Token:
-                sum += 1
-    return sum
+    def addCollision(self, key, value):
+        id = value.id
+        if self.collisions.get(key) != None:
+            self.collisions.get(key)[id].append(value)
+        else:
+            list = [ [] for _ in range(self.__size) ]
+            list[self.hashTable.get(key).id].append(self.hashTable.get(key))
+            list[id].append(value)
+            self.collisions.update({key:list})
+    
+    def updateCollisionSize(self, n):
+        for key, vals in self.collisions.items():
+            for _ in range(n):
+                vals.append([])
+
+    def reset(self):
+        self.hashTable = {}
+        self.collisions = {}
+        self.results = []
+        self.weights = []
+        self.__size += 0

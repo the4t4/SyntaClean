@@ -1,6 +1,3 @@
-from itertools import count
-from turtle import st
-
 class Fingerprint:
     def __init__(self, id, weight, node):
         self.id = id
@@ -18,5 +15,3 @@ class Fingerprint:
     
     def __repr__(self):
         return 'Fingerprint(%d, %d, %r)' % (self.id, self.weight, self.node)
-
-idGenerator = count(start=0, step=1)

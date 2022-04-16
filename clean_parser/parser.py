@@ -24,14 +24,14 @@ class WhitespaceRemover(Transformer_InPlace):
         return Discard
 
 class CleanParser():
-    def __init__(self, parser="lalr", abstractionLevel=AbstractionLevel.NONE, propagate_positions=True, debug=False, logLevel=logging.DEBUG):
+    def __init__(self, parser = "lalr", abstractionLevel = AbstractionLevel.NONE, propagate_positions = True, debug = False, logLevel = logging.DEBUG):
         self.parser = Lark.open(
-            grammar_filename="grammars/clean.lark",
-            rel_to=__file__,
-            parser=parser,
-            postlex=FooterIndenter(),
-            propagate_positions=propagate_positions,
-            debug=debug
+            grammar_filename = "grammars/clean.lark",
+            rel_to = __file__,
+            parser = parser,
+            postlex = FooterIndenter(),
+            propagate_positions = propagate_positions,
+            debug = debug
         )
         self.abstractionLevel=abstractionLevel
         logger.setLevel(logLevel)
@@ -41,7 +41,7 @@ class CleanParser():
         WhitespaceRemover().transform(tree)
         applyAbstr(tree, self.abstractionLevel)
         return tree
-    
+
     def make_png(self, parsedTree, file):
         tree.pydot__tree_to_png(parsedTree, file)
 

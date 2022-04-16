@@ -4,9 +4,11 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(
 import unittest
 from unittest import TestCase
 
-from clean_parser.parser import parser, TokenRemover
+from clean_parser.parser import CleanParser
 
 directory = "tests\\resources"
+
+parser = CleanParser()
 
 class TestParser(TestCase):
     def test_parser(self):
@@ -25,5 +27,4 @@ if __name__ == '__main__':
     else:
         f = open(sys.argv[1])
         tree = parser.parse(f.read())
-        TokenRemover().transform(tree)
         print(tree.pretty())
