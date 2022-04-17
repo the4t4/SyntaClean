@@ -1,19 +1,19 @@
 import os, sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
+from clean_parser.parser import CleanParser
+
 import unittest
 from unittest import TestCase
 
-from clean_parser.parser import CleanParser
-
-directory = "tests\\resources"
+resourceDir = "resources"
 
 parser = CleanParser()
 
 class TestParser(TestCase):
     def test_parser(self):
-        for filename in os.listdir(directory):
-            file = os.path.join(directory, filename)
+        for filename in os.listdir(resourceDir):
+            file = os.path.join(resourceDir, filename)
             try:
                 f = open(file)
                 parser.parse(f.read())

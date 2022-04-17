@@ -1,4 +1,4 @@
-module factorial	 
+module test1
 import StdEnv
 
 Start = fac 5
