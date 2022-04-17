@@ -8,18 +8,18 @@ class AbstractionLevel(Enum):
     SIMPLE = 1
     COMPLETE = 2
 
-class TokenRemover(Transformer_InPlace):
-    def __default_token__(self, token):
-        return Discard
-
-class TokenAbstractor(Transformer_InPlace):
+class SimpleAbstractor(Transformer_InPlace):
     def __default_token__(self, token):
         return Token(token.type, 'ABSTRACTED')
+
+class CompleteAbstractor(Transformer_InPlace):
+    def __default_token__(self, token):
+        return Token('ABSTRACTED', 'ABSTRACTED')
 
 def applyAbstr(tree, abstractionLevel):
     if abstractionLevel == AbstractionLevel.NONE:
         return
     elif abstractionLevel == AbstractionLevel.SIMPLE:
-        TokenAbstractor().transform(tree)
+        SimpleAbstractor().transform(tree)
     elif abstractionLevel == AbstractionLevel.COMPLETE:
-        TokenRemover().transform(tree)
+        CompleteAbstractor().transform(tree)

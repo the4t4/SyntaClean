@@ -14,4 +14,4 @@ class Fingerprint:
         return not (self == other)
     
     def __repr__(self):
-        return 'Fingerprint(%d, %d, %r)' % (self.id, self.weight, self.node)
+        return 'Fingerprint(%d, %d, %r)' % (self.id, self.weight, self.node.data)

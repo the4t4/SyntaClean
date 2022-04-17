@@ -15,6 +15,5 @@ if __name__ == "__main__":
     checker = PlagiarismCheker()
     tree1 = parser.parse(f1.read())
     tree2 = parser.parse(f2.read())
-    checker.check(tree1)
-    checker.check(tree2)
-    print(checker.results)
+    checker.check(tree1, tree2, tree2, tree1)
+    print(checker.prettyResults())
