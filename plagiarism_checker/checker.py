@@ -1,3 +1,4 @@
+from lark.tree import Tree
 from lark.lexer import Token
 from hashlib import md5
 
@@ -12,13 +13,13 @@ class PlagiarismCheker():
         self.fingerprints = []
         self.__size = 0
 
-    def check(self, *trees):
+    def check(self, trees, files):
         n = len(trees)
         self.updateSize(n)
 
-        for tree in trees:
+        for i in range(n):
             id = next(idGenerator)
-            fingerprint = Fingerprint(id, treeSize(tree), tree)
+            fingerprint = Fingerprint(files[i], id, treeSize(trees[i]), trees[i])
             self.fingerprints.append(fingerprint)
             self.hashTree(fingerprint)
 
@@ -36,7 +37,7 @@ class PlagiarismCheker():
         self.addTreeHash(hash, fingerprint)
         for subtree in fingerprint.node.children:
             if type(subtree) != Token:
-                subfp = Fingerprint(fingerprint.id, treeSize(subtree), subtree)
+                subfp = Fingerprint(fingerprint.file, fingerprint.id, treeSize(subtree), subtree)
                 self.hashTree(subfp)
     
     def hashNode(self, node):
@@ -98,8 +99,11 @@ class PlagiarismCheker():
     def prettyResults(self):
         out = "\t" + "\t".join([" " + str(i) for i in range(self.__size)]) + "\n"
         out += "\t" + "\t".join(["----" for _ in range(self.__size)]) + "\n"
+        ids = "\n"
         for i in range(self.__size):
-            out += str(i) + "   |\t" + "\t".join([str(j) for j in self.results[i]]) + "\n"
+            out += str(i).ljust(3) + "   |\t" + "\t".join([str(j) for j in self.results[i]]) + "\n"
+            ids += str(self.fingerprints[i].id) + " = " + self.fingerprints[i].file + "\n"
+        out += ids
         return out
 
     def reset(self):

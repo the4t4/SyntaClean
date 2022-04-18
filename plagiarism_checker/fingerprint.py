@@ -1,12 +1,16 @@
 class Fingerprint:
-    def __init__(self, id, weight, node):
+    def __init__(self, file, id, weight, node):
+        self.file = file
         self.id = id
         self.weight = weight
         self.node = node
 
     def __eq__(self, other):
         try:
-            return self.id == other.id and self.weight == other.weight and self.node == other.node
+            return (self.file == self.file and 
+                    self.id == other.id and 
+                    self.weight == other.weight and 
+                    self.node == other.node)
         except AttributeError:
             return False
     
@@ -14,4 +18,4 @@ class Fingerprint:
         return not (self == other)
     
     def __repr__(self):
-        return 'Fingerprint(%d, %d, %r)' % (self.id, self.weight, self.node.data)
+        return 'Fingerprint(%d, %d, %d, %r)' % (self.file, self.id, self.weight, self.node.data)
