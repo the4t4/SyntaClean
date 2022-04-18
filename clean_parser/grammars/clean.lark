@@ -10,23 +10,21 @@ declaration     : function_decl indents
                 | object_decl indents
                 | variable indents
 
-function_decl   : header? function indents footer?
-function        : T_ID indents param_decl_val+ indents (case indents)* T_ASSIGN indents expression
+function_decl   : function indents where?
+function        : T_ID indents param_decl_val+ indents (case indents)* (T_ASSIGN indents expression)?
                 | entry
 
 entry           : T_START indents T_ASSIGN indents expression
 
 variable        : T_ID indents T_ASSIGN indents expression
 
-instance_decl   : instance indents (footer indents)?
+instance_decl   : instance indents (where indents)?
 instance        : T_INSTANCE indents operator indents type indents (instance_case indents)*
                 | T_INSTANCE indents T_ID indents type indents (instance_case indents)*
 instance_case   : T_BAR indents operator indents type
                 | T_BAR indents T_ID indents type
 
-type_decl       : T_DOUBLE_COLON indents? T_ID indents? type* indents T_ASSIGN indents type+ indents (guard indents)*
-                | T_DOUBLE_COLON indents? T_ID indents? type* indents T_ALIAS indents type+ indents (T_RIGHT_ARROW indents type indents)? (guard indents)*
-types           : type (indents T_COMMA indents type)*
+type_decl       : T_DOUBLE_COLON indents T_ID (indents type)* indents (T_ASSIGN | T_ALIAS) indents type+ indents (guard indents)*
 type            : T_INT
                 | T_REAL
                 | T_BOOL
@@ -36,29 +34,33 @@ type            : T_INT
                 | tuple_type
                 | list_type
                 | array_type
-                | tree_type
-                | type T_RIGHT_ARROW indents type
-                | T_OPEN indents type indents T_CLOSE
+                | function_type
+                | T_OPEN indents type+ indents T_CLOSE
 
-object_decl     : T_ID T_DOUBLE_COLON type+
+function_type   : type T_RIGHT_ARROW indents type
 
-header          : T_ID indents T_DOUBLE_COLON indents type+ indents T_RIGHT_ARROW indents type indents
-footer          : T_WHERE indents statement+ indents
+object_decl     : T_ID indents T_DOUBLE_COLON type+ properties?
+
+where           : T_WHERE statement
+                | T_WHERE indents statement+ indents
 
 case            : T_BAR indents expression indents T_ASSIGN indents expression
 
-statement       : T_ID indents T_ASSIGN indents expression T_NEWLINE+
-                | operator indents statement_val indents statement_val indents T_ASSIGN indents expression T_NEWLINE+
-                | indents footer indents
-statement_val   : T_ID
-                | tree_type
-                | T_WILDCARD
+properties      : T_BAR indents expression (T_COMMA expression)* indents
 
-tuple_type      : T_OPEN types indents T_CLOSE
+statement       : expression indents T_ASSIGN indents expression T_NEWLINE+
+                | operator indents statement_val indents statement_val indents T_ASSIGN indents expression T_NEWLINE+
+                | indents where indents
+statement_val   : T_ID
+                | T_WILDCARD
+                | tree_type
+
+tuple_type      : T_OPEN indents tuple_type_vals indents T_CLOSE
+tuple_type_vals : type (indents T_COMMA indents type)+
 tuple           : T_OPEN indents? tuple_vals indents T_CLOSE
 tuple_vals      : expression (indents T_COMMA indents expression)+
 
-tuple_param     : T_OPEN indents? param_decl_val (indents T_COMMA indents expression)+ indents T_CLOSE
+tuple_param     : T_OPEN indents param_decl_val (indents T_COMMA indents expression)+ indents T_CLOSE
 
 list_type       : T_SOPEN indents type indents T_SCLOSE
 list            : T_SOPEN (indents? list_vals (indents T_DOT_DOT indents expression?)?)? indents T_SCLOSE
@@ -84,20 +86,14 @@ array_param_vals: array_val (indents T_COMMA indents array_param_val)*
 array_param_val : T_ID indents T_ASSIGN indents param_decl_val
                 | param_decl_val
 
-comprehension   : comp_val indents comp_feed indents comp_feeder (indents T_CONT indents comp_val indents comp_feed indents comp_feeder)*
-comp_val        : T_ID 
-                | tuple
-                | function_call
+comprehension   : expression indents comp_feed indents expression (indents T_CONT indents expression indents comp_feed indents expression)*
 comp_feed       : T_LIST_FEED
                 | T_ARRAY_FEED
-comp_feeder     : T_ID
-                | list
-                | array
 guard           : T_BAR indents expression
 
 tree_type       : T_OPEN indents? T_ID (indents type)+ indents T_CLOSE
 
-tree_param      : T_OPEN indents? T_ID (indents tree_param_node)+ indents T_CLOSE
+tree_param      : T_OPEN indents T_ID (indents tree_param_node)+ indents T_CLOSE
 tree_param_node : param_decl_val
                 | T_OPEN indents tree_param indents T_CLOSE
 
@@ -166,7 +162,7 @@ lambda_function : T_OPEN indents T_LAMBDA (indents param)+ indents T_ASSIGN inde
                 | T_GE
                 | T_LE
 
-?indents         : T_NEWLINE* (_INDENT | _DEDENT+)?
+?indents        : T_NEWLINE* (_INDENT | _DEDENT+)?
 
 T_MODULE        : "module"
 T_IMPORT        : "import"
@@ -225,7 +221,7 @@ T_INDEX         : "!!"
 T_COMPOSITION   : "o"
 T_WILDCARD      : "_"
 
-T_ID            : /[a-zA-Z][a-zA-Z0-9_]*/
+T_ID            : /[a-zA-Z][a-zA-Z0-9_`]*/
 T_INT_LIT       : /((?<!\w)[~+-])?[0-9]+/
 T_REAL_LIT      : /((?<!\w)[~+-])?[0-9]+\.[0-9]+/
 T_STRING_LIT    : /\"[^"]+\"/
@@ -233,7 +229,7 @@ T_CHAR_LIT      : /\'.\'/
 
 T_NEWLINE       : /(\r?\n[\t ]*)+/
 T_WHITESPACE    : /[ \t]+/
-T_LINE_COMMENT  : /\/\/.*/
+T_LINE_COMMENT  : /\/\/.*((\r?\n[\t ]*)\/\/.*)*/
 T_MULTI_COMMENT : /\/\*([^*]|(\*+[^\/]))*\*+\//
 
 %ignore T_WHITESPACE

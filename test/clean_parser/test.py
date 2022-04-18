@@ -16,7 +16,8 @@ class TestParser(TestCase):
             file = os.path.join(resourceDir, filename)
             try:
                 f = open(file)
-                parser.parse(f.read())
+                tree = parser.parse(f.read())
+                # parser.make_png(tree, "png/" + filename[:-4] + ".png")
             except Exception as e:
                 self.fail("Could not parse " + file + ":\n" + str(e))
             f.close()
