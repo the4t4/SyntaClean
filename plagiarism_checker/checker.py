@@ -30,7 +30,7 @@ class PlagiarismCheker():
                 similarityList[i] = round(collidedWeights[i]/fp.weight, 2)
             self.results[fp.id] = similarityList
 
-        return self.results
+        return (self.results, self.fingerprints)
 
     def hashTree(self, fingerprint):
         hash = self.hashNode(fingerprint.node)

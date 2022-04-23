@@ -2,3 +2,5 @@ graphviz==0.20
 lark==1.1.2
 pydot==1.4.2
 pyparsing==3.0.8
+PySide2==5.15.2.1
+shiboken2==5.15.2.1
