@@ -11,4 +11,12 @@ def treeSize(tree):
                 sum += 1
     return sum
 
-idGenerator = count(start=0, step=1)
+class IDGenerator():
+    idGenerator = count(start=0, step=1)
+
+    def reset(self):
+        self.idGenerator = count(start=0, step=1)
+
+    def __next__(self):
+        return next(self.idGenerator)
+

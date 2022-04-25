@@ -5,7 +5,7 @@ from clean_parser.abstraction import AbstractionLevel
 from plagiarism_checker.checker import PlagiarismCheker
 
 parser = CleanParser(abstractionLevel=AbstractionLevel.SIMPLE)
-checker = PlagiarismCheker()
+checker = PlagiarismCheker(threshold=0.5)
 
 def main(argv):
     trees = []
@@ -35,8 +35,9 @@ def main(argv):
                 print("Could not parse " + arg + ":\n" + str(e))
             f.close()
     
-    results, fingerprints = checker.check(trees, files)
-    return (results, fingerprints)
+    results = checker.check(trees, files)
+    similarities, fingerprints = checker.getReport()
+    return (results, similarities, fingerprints)
 
 if __name__ == "__main__":
     if len(sys.argv) == 1:

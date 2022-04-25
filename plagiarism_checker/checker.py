@@ -1,24 +1,28 @@
+from cgitb import reset
 from lark.tree import Tree
 from lark.lexer import Token
 from hashlib import md5
 
 from plagiarism_checker.fingerprint import Fingerprint
-from plagiarism_checker.utils import treeSize, idGenerator
+from plagiarism_checker.utils import treeSize, IDGenerator
 
 class PlagiarismCheker():
-    def __init__(self, hashTable = {}, collisions = {}):
-        self.hashTable = hashTable
-        self.collisions = collisions
-        self.results = []
-        self.fingerprints = []
+    def __init__(self, threshold=0.5):
         self.__size = 0
+        self.threshold = threshold
+        self.hashTable = {}
+        self.collisions = {}
+        self.results = {}
+        self.similarities = []
+        self.fingerprints = []
+        self.idGenerator = IDGenerator()
 
     def check(self, trees, files):
         n = len(trees)
         self.updateSize(n)
 
         for i in range(n):
-            id = next(idGenerator)
+            id = next(self.idGenerator)
             fingerprint = Fingerprint(files[i], id, treeSize(trees[i]), trees[i])
             self.fingerprints.append(fingerprint)
             self.hashTree(fingerprint)
@@ -28,9 +32,11 @@ class PlagiarismCheker():
             similarityList = [0] * self.__size
             for i in range(self.__size):
                 similarityList[i] = round(collidedWeights[i]/fp.weight, 2)
-            self.results[fp.id] = similarityList
+            self.similarities[fp.id] = similarityList
 
-        return (self.results, self.fingerprints)
+        results = self.collectResults()
+
+        return results
 
     def hashTree(self, fingerprint):
         hash = self.hashNode(fingerprint.node)
@@ -81,34 +87,57 @@ class PlagiarismCheker():
                         collidedWeights[i] += result[i]
 
         return collidedWeights
+
+    def collectResults(self):
+        self.results.clear()
+        for row in range(self.__size):
+            matches = []
+            for col in range(self.__size):
+                if self.similarities[row][col] >= self.threshold:
+                    matches.append((self.fingerprints[col].file, self.similarities[row][col]))
+            if len(matches) > 0:
+                self.results.update({self.fingerprints[row].file : matches})
+        
+        return self.results.copy()
     
     def updateSize(self, n):
         self.__size += n
 
-        for result in self.results:
+        for similarity in self.similarities:
             for _ in range(n):
-                result.append(0.0)
+                similarity.append(0.0)
 
         for _ in range(n):
-            self.results.append([0.0] * self.__size)
+            self.similarities.append([0.0] * self.__size)
 
         for key, vals in self.collisions.items():
             for _ in range(n):
                 vals.append([])
     
-    def prettyResults(self):
+    def prettyReport(self):
         out = "\t" + "\t".join([" " + str(i) for i in range(self.__size)]) + "\n"
         out += "\t" + "\t".join(["----" for _ in range(self.__size)]) + "\n"
         ids = "\n"
         for i in range(self.__size):
-            out += str(i).ljust(3) + "   |\t" + "\t".join([str(j) for j in self.results[i]]) + "\n"
+            out += str(i).ljust(3) + "   |\t" + "\t".join([str(j) for j in self.similarities[i]]) + "\n"
             ids += str(self.fingerprints[i].id) + " = " + self.fingerprints[i].file + "\n"
         out += ids
         return out
 
     def reset(self):
-        self.hashTable = {}
-        self.collisions = {}
-        self.results = []
-        self.fingerprints = []
         self.__size = 0
+        self.hashTable.clear()
+        self.collisions.clear()
+        self.results.clear()
+        self.similarities.clear()
+        self.fingerprints.clear()
+        self.idGenerator.reset()
+
+    def setThreshold(self, threshold):
+        self.threshold = threshold
+
+    def getReport(self):
+        return (self.similarities.copy(), self.fingerprints.copy())
+
+    def getResults(self):
+        return self.results.copy()

@@ -42,6 +42,9 @@ class CleanParser():
         applyAbstr(tree, self.abstractionLevel)
         return tree
 
+    def setAbstractionLevel(self, level):
+        self.abstractionLevel = level
+
     def make_png(self, parsedTree, file):
         tree.pydot__tree_to_png(parsedTree, file)
 
