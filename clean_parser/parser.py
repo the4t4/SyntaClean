@@ -33,7 +33,7 @@ class CleanParser():
             propagate_positions = propagate_positions,
             debug = debug
         )
-        self.abstractionLevel=abstractionLevel
+        self.abstractionLevel = abstractionLevel
         logger.setLevel(logLevel)
 
     def parse(self, text):

@@ -4,8 +4,8 @@ from clean_parser.parser import CleanParser
 from clean_parser.abstraction import AbstractionLevel
 from plagiarism_checker.checker import PlagiarismCheker
 
-parser = CleanParser(abstractionLevel=AbstractionLevel.SIMPLE)
-checker = PlagiarismCheker(threshold=0.5)
+parser = CleanParser(abstractionLevel=AbstractionLevel.NONE)
+checker = PlagiarismCheker(threshold=0.3)
 
 def main(argv):
     trees = []

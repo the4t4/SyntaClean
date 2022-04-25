@@ -1,5 +1,3 @@
-from cgitb import reset
-from lark.tree import Tree
 from lark.lexer import Token
 from hashlib import md5
 

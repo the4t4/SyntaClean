@@ -1,3 +1,4 @@
+from email import header
 import sys
 
 from PySide2.QtCore import Qt, QPropertyAnimation, QParallelAnimationGroup, QAbstractAnimation
@@ -5,6 +6,7 @@ from PySide2.QtGui import QFont, QPainter
 from PySide2.QtWidgets import QApplication, QWidget, QListWidget, QTableWidget, QTableWidgetItem, QPushButton, QSlider, QLabel, QGroupBox, QButtonGroup, QRadioButton, QStackedLayout, QVBoxLayout, QHBoxLayout, QGridLayout, QHeaderView, QAbstractItemView, QScrollArea, QFrame, QToolButton, QSizePolicy
 
 import SyntaClean
+from clean_parser.abstraction import AbstractionLevel
 
 class ListWidget(QListWidget):
     def __init__(self, placeholderText='', parent=None):
@@ -112,6 +114,10 @@ class Spoiler(QWidget):
             self.toggleAnimation.start()
 
         self.toggleButton.clicked.connect(start_animation)
+    
+    def setFont(self, font):
+            super().setFont(font)
+            self.toggleButton.setFont(font)
 
     def setContentLayout(self, contentLayout):
         self.contentArea.destroy()
@@ -176,7 +182,9 @@ class SettingsWidget(QWidget):
         
         abstractionLayout = QHBoxLayout()   
         abstractionLayout.addWidget(self.radioNone)
+        abstractionLayout.addStretch()
         abstractionLayout.addWidget(self.radioSimple)
+        abstractionLayout.addStretch()
         abstractionLayout.addWidget(self.radioComplete)    
         self.abstraction.setLayout(abstractionLayout)
 
@@ -209,8 +217,9 @@ class SettingsWidget(QWidget):
         self.sliderValueLabel.setText(str(num) + "%")
     
     def onRadioValueChange(self):
-        level = self.radioButtons.checkedId()
-        SyntaClean.parser.setAbstractionLevel(level)
+        levelNum = self.radioButtons.checkedId()
+        abstractionLevel = AbstractionLevel(levelNum)
+        SyntaClean.parser.setAbstractionLevel(abstractionLevel)
 
     def onClearButtonClick(self):
         SyntaClean.checker.reset()
@@ -242,6 +251,14 @@ class ResultPageWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
+        self.widget = QWidget()
+
+        self.scrollArea = QScrollArea()
+        self.scrollArea.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.scrollArea.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.scrollArea.setWidgetResizable(True)
+        self.scrollArea.setStyleSheet("QScrollArea { background-color: white; border: none; }")
+
         self.results = QGroupBox("Results")
         self.results.setFont(QFont("Helvetica [Cronyx]", 12))
         resultsLayout = QVBoxLayout()
@@ -258,11 +275,13 @@ class ResultPageWidget(QWidget):
 
         self.tableWidget = QTableWidget(self)
         self.tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.tableWidget.verticalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.tableWidget.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.tableWidget.hide()
 
         self.listWidget = QListWidget(self)
+        self.listWidget.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.listWidget.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.listWidget.hide()
 
         self.back = QPushButton('Back', self)
@@ -272,9 +291,17 @@ class ResultPageWidget(QWidget):
         verticalLayout = QVBoxLayout()
         verticalLayout.addWidget(self.results)
         verticalLayout.addWidget(self.moreInfo)
+        verticalLayout.addStretch()
         verticalLayout.addWidget(self.back)
-        self.setLayout(verticalLayout)
-    
+        self.widget.setLayout(verticalLayout)
+        self.widget.setMinimumSize(0,0)
+
+        self.scrollArea.setWidget(self.widget)
+
+        scrollLayout = QVBoxLayout()
+        scrollLayout.addWidget(self.scrollArea)
+        self.setLayout(scrollLayout)
+
     def setData(self, results, similarities, fingerprints):
         self.createResultsContent(results)
         size = len(similarities)
@@ -283,11 +310,19 @@ class ResultPageWidget(QWidget):
 
         for row in range(size):
             for column in range(size):
-                    self.tableWidget.setItem(row, column, QTableWidgetItem(str(similarities[row][column])))
+                    cell = QTableWidgetItem(str(similarities[row][column]))
+                    cell.setTextAlignment(Qt.AlignCenter)
+                    self.tableWidget.setItem(row, column, cell)
+
+        tableHeight = sum([ self.tableWidget.verticalHeader().sectionSize(i) for i in range(size) ]) + self.tableWidget.horizontalHeader().height()
+        self.tableWidget.setMinimumHeight(tableHeight)
 
         self.listWidget.clear()
         for fingerprint in fingerprints:
             self.listWidget.addItem(str(fingerprint.id + 1) + " = " + fingerprint.file)
+        
+        listHeight = self.listWidget.sizeHintForRow(0) * self.listWidget.count() + 2 * self.listWidget.frameWidth()
+        self.listWidget.setMinimumHeight(listHeight)   
 
     def createResultsContent(self, results):
         layout = self.results.layout()
@@ -301,6 +336,7 @@ class ResultPageWidget(QWidget):
         else:
             for file, matches in results.items():
                 spoiler = Spoiler(file)
+                spoiler.setFont(QFont("Helvetica [Cronyx]", 10))
                 resultLayout = QVBoxLayout()
 
                 for i in range(len(matches)):
@@ -308,11 +344,12 @@ class ResultPageWidget(QWidget):
                     similarity = round(matches[i][1] * 100)
                     text = matchedFile + " (" + str(similarity) + "%)"
                     resultButton = QPushButton(text, self)
+                    resultButton.setFont(QFont("Helvetica [Cronyx]", 10))
                     resultLayout.addWidget(resultButton)
 
                 spoiler.setContentLayout(resultLayout)
                 layout.addWidget(spoiler)
-    
+        
     def clearLayout(self, layout):
         if layout is not None:
             while layout.count():
@@ -324,10 +361,9 @@ class ResultPageWidget(QWidget):
                     self.clearLayout(item.layout())
 
     def onMoreInfoClick(self):
-        layout = self.layout()
+        layout = self.widget.layout()
         
         self.moreInfo.hide()
-        
         layout.takeAt(1)
         
         self.tableWidget.show()
@@ -339,7 +375,7 @@ class ResultPageWidget(QWidget):
         layout.insertWidget(3, self.lessInfo)
 
     def onLessInfoClick(self):
-        layout = self.layout()
+        layout = self.widget.layout()
 
         self.moreInfo.show()
 
@@ -347,12 +383,11 @@ class ResultPageWidget(QWidget):
         self.listWidget.hide()        
         self.lessInfo.hide()
 
-        layout.takeAt(1)
-        layout.takeAt(2)
         layout.takeAt(3)
+        layout.takeAt(2)
+        layout.takeAt(1)
 
         layout.insertWidget(1, self.moreInfo)
-
 
 class MainWindow(QWidget):
     def __init__(self):
