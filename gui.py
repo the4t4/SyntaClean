@@ -1,7 +1,7 @@
 import sys
 
 from PySide2.QtCore import Qt, QPropertyAnimation, QParallelAnimationGroup, QAbstractAnimation
-from PySide2.QtGui import QFont, QPainter
+from PySide2.QtGui import QFont, QPainter, QColor
 from PySide2.QtWidgets import QApplication, QWidget, QListWidget, QTableWidget, QTableWidgetItem, QPushButton, QSlider, QLabel, QGroupBox, QButtonGroup, QRadioButton, QStackedLayout, QVBoxLayout, QHBoxLayout, QGridLayout, QHeaderView, QAbstractItemView, QScrollArea, QFrame, QToolButton, QSizePolicy
 
 import SyntaClean
@@ -262,7 +262,6 @@ class ResultPageWidget(QWidget):
         self.moreInfoToggled = False
 
         self.scrollArea = QScrollArea()
-        self.scrollArea.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.scrollArea.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setStyleSheet("QScrollArea { background-color: white; border: none; }")
@@ -285,12 +284,9 @@ class ResultPageWidget(QWidget):
         self.tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.tableWidget.verticalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.tableWidget.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.tableWidget.hide()
 
         self.listWidget = QListWidget(self)
-        self.listWidget.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.listWidget.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.listWidget.hide()
 
         self.back = QPushButton('Back', self)
@@ -319,18 +315,21 @@ class ResultPageWidget(QWidget):
 
         for row in range(size):
             for column in range(size):
-                    cell = QTableWidgetItem(str(similarities[row][column]))
+                    similarity = similarities[row][column]
+                    cell = QTableWidgetItem(str(round(similarity * 100)) + "%")
                     cell.setTextAlignment(Qt.AlignCenter)
+                    color = QColor(min(255, 2*255*(similarity)), min(255, 2*255*(1-similarity)), 0)
+                    cell.setBackgroundColor(color)
                     self.tableWidget.setItem(row, column, cell)
 
-        tableHeight = sum([ self.tableWidget.verticalHeader().sectionSize(i) for i in range(size) ]) + self.tableWidget.horizontalHeader().height()
+        tableHeight = sum([ self.tableWidget.verticalHeader().sectionSize(i) for i in range(min(size,15)) ]) + self.tableWidget.horizontalHeader().height() + 2 * self.tableWidget.frameWidth()
         self.tableWidget.setMinimumHeight(tableHeight)
 
         self.listWidget.clear()
         for fingerprint in fingerprints:
             self.listWidget.addItem(str(fingerprint.id + 1) + " = " + fingerprint.file)
         
-        listHeight = self.listWidget.sizeHintForRow(0) * self.listWidget.count() + 2 * self.listWidget.frameWidth()
+        listHeight = self.listWidget.sizeHintForRow(0) * min(self.listWidget.count(),15) + 2 * self.listWidget.frameWidth()
         self.listWidget.setMinimumHeight(listHeight)   
 
     def createResultsContent(self, results):
