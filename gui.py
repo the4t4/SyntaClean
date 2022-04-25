@@ -1,4 +1,3 @@
-from email import header
 import sys
 
 from PySide2.QtCore import Qt, QPropertyAnimation, QParallelAnimationGroup, QAbstractAnimation
@@ -9,11 +8,12 @@ import SyntaClean
 from clean_parser.abstraction import AbstractionLevel
 
 class ListWidget(QListWidget):
-    def __init__(self, placeholderText='', parent=None):
+    def __init__(self, placeholderText='', additive=True, parent=None):
         super().__init__(parent)
         self.setAcceptDrops(True)
         self.resize(600, 600)
         self.__placeholderText = placeholderText
+        self.additive = additive
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls:
@@ -29,6 +29,8 @@ class ListWidget(QListWidget):
             event.ignore()
 
     def dropEvent(self, event):
+        if not self.additive:
+            self.clear()
         if event.mimeData().hasUrls():
             event.setDropAction(Qt.CopyAction)
             event.accept()
@@ -141,7 +143,7 @@ class SettingsWidget(QWidget):
         self.baseFile = QGroupBox("Base File")
         self.baseFile.setFont(QFont("Helvetica [Cronyx]", 12))
 
-        self.dropSpace = ListWidget("Drop base file here", self)
+        self.dropSpace = ListWidget("Drop base file here", False, self)
 
         baseFileLayout = QVBoxLayout()
         baseFileLayout.addWidget(self.dropSpace)
@@ -230,16 +232,21 @@ class SettingsWidget(QWidget):
     def onCheckButtonClick(self):
         startingPage = self.parent()
         mainWindow = self.parent().parent()
+        
         SyntaClean.checker.reset()
-        items = [startingPage.listWidget.item(i).text() for i in range(startingPage.listWidget.count())]
-        result, similarities, fingerprints = SyntaClean.main(items)
+        files = [startingPage.listWidget.item(i).text() for i in range(startingPage.listWidget.count())]
+        baseFile = startingPage.settingsWidget.dropSpace.item(0)
+        if baseFile is not None:
+            SyntaClean.setBaseFile(baseFile.text())
+        result, similarities, fingerprints = SyntaClean.main(files)
+
         mainWindow.resultPageWidget.setData(result, similarities, fingerprints)
         mainWindow.stackedLayout.setCurrentIndex(1)
 
 class StartingPageWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.listWidget = ListWidget("Drop files here", self)
+        self.listWidget = ListWidget("Drop files here", True, self)
         self.settingsWidget = SettingsWidget(self)
 
         horizontalLayout = QHBoxLayout()
@@ -252,6 +259,7 @@ class ResultPageWidget(QWidget):
         super().__init__(parent)
 
         self.widget = QWidget()
+        self.moreInfoToggled = False
 
         self.scrollArea = QScrollArea()
         self.scrollArea.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -275,6 +283,7 @@ class ResultPageWidget(QWidget):
 
         self.tableWidget = QTableWidget(self)
         self.tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.tableWidget.verticalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.tableWidget.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.tableWidget.hide()
@@ -286,7 +295,7 @@ class ResultPageWidget(QWidget):
 
         self.back = QPushButton('Back', self)
         self.back.setFont(QFont("Helvetica [Cronyx]", 12))
-        self.back.clicked.connect(lambda: parent.stackedLayout.setCurrentIndex(0))
+        self.back.clicked.connect(self.onBackClick)
 
         verticalLayout = QVBoxLayout()
         verticalLayout.addWidget(self.results)
@@ -361,6 +370,7 @@ class ResultPageWidget(QWidget):
                     self.clearLayout(item.layout())
 
     def onMoreInfoClick(self):
+        self.moreInfoToggled = True
         layout = self.widget.layout()
         
         self.moreInfo.hide()
@@ -375,6 +385,7 @@ class ResultPageWidget(QWidget):
         layout.insertWidget(3, self.lessInfo)
 
     def onLessInfoClick(self):
+        self.moreInfoToggled = False
         layout = self.widget.layout()
 
         self.moreInfo.show()
@@ -388,6 +399,14 @@ class ResultPageWidget(QWidget):
         layout.takeAt(1)
 
         layout.insertWidget(1, self.moreInfo)
+    
+    def onBackClick(self):
+        parent = self.parent()
+
+        if self.moreInfoToggled:
+            self.onLessInfoClick()
+
+        parent.stackedLayout.setCurrentIndex(0)
 
 class MainWindow(QWidget):
     def __init__(self):
@@ -396,11 +415,12 @@ class MainWindow(QWidget):
         self.setWindowTitle("SyntaClean")
         self.resize(1200,600)
         self.setMinimumSize(400,200)
-        
+
+        self.stackedLayout = QStackedLayout()
+
         self.startingPageWidget = StartingPageWidget(self)
         self.resultPageWidget = ResultPageWidget(self)
 
-        self.stackedLayout = QStackedLayout()
         self.stackedLayout.addWidget(self.startingPageWidget)
         self.stackedLayout.addWidget(self.resultPageWidget)
 

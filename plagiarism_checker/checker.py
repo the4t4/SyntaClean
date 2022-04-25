@@ -9,21 +9,25 @@ class PlagiarismCheker():
         self.__size = 0
         self.threshold = threshold
         self.hashTable = {}
+        self.baseTreeHash = {}
         self.collisions = {}
         self.results = {}
         self.similarities = []
         self.fingerprints = []
         self.idGenerator = IDGenerator()
 
-    def check(self, trees, files):
+    def check(self, trees, files, baseTree=None):
         n = len(trees)
         self.updateSize(n)
+
+        if baseTree is not None:
+            self.hashBaseTree(baseTree)
 
         for i in range(n):
             id = next(self.idGenerator)
             fingerprint = Fingerprint(files[i], id, treeSize(trees[i]), trees[i])
             self.fingerprints.append(fingerprint)
-            self.hashTree(fingerprint)
+            self.hashFingerprint(fingerprint)
 
         for fp in self.fingerprints:
             collidedWeights = self.calculateCollidedWeights(fp.node, fp.id)
@@ -36,27 +40,39 @@ class PlagiarismCheker():
 
         return results
 
-    def hashTree(self, fingerprint):
+    def hashBaseTree(self, baseTree):
+        self.baseTreeHash.clear()
+
+        subtrees = baseTree.children[0].children
+
+        for subtree in subtrees:
+            hash = self.hashNode(subtree)
+            if self.baseTreeHash.get(hash) is None:
+                self.baseTreeHash.update({hash:subtree})
+
+    def hashFingerprint(self, fingerprint):
         hash = self.hashNode(fingerprint.node)
+        if self.baseTreeHash.get(hash) is not None:
+            return
         self.addTreeHash(hash, fingerprint)
         for subtree in fingerprint.node.children:
-            if type(subtree) != Token:
+            if type(subtree) is not Token:
                 subfp = Fingerprint(fingerprint.file, fingerprint.id, treeSize(subtree), subtree)
-                self.hashTree(subfp)
+                self.hashFingerprint(subfp)
     
     def hashNode(self, node):
         hash = md5(repr(node).encode('ASCII')).digest()
         return hash
 
     def addTreeHash(self, key, value):
-        if self.hashTable.get(key) != None:
+        if self.hashTable.get(key) is not None:
             self.addCollision(key, value)
         else:
             self.hashTable.update({key:value})
 
     def addCollision(self, key, value):
         id = value.id
-        if self.collisions.get(key) != None:
+        if self.collisions.get(key) is not None:
             self.collisions.get(key)[id].append(value)
         else:
             list = [ [] for _ in range(self.__size) ]
@@ -70,7 +86,7 @@ class PlagiarismCheker():
         collidedWeights = [0] * self.__size
         blockExtraCollides = [False] * self.__size
 
-        if collisions != None:
+        if collisions is not None and len(collisions[id]) > 0:
             weight = collisions[id][0].weight
             for i in range(self.__size):
                 collidedWeight = min(weight, weight * len(collisions[i]))
@@ -78,7 +94,7 @@ class PlagiarismCheker():
                     collidedWeights[i] += collidedWeight
                     blockExtraCollides[i] = True
         for subtree in tree.children:
-            if type(subtree) != Token:
+            if type(subtree) is not Token:
                 result = self.calculateCollidedWeights(subtree, id)
                 for i in range(self.__size):
                     if not blockExtraCollides[i]:
@@ -125,6 +141,7 @@ class PlagiarismCheker():
     def reset(self):
         self.__size = 0
         self.hashTable.clear()
+        self.baseTreeHash.clear()
         self.collisions.clear()
         self.results.clear()
         self.similarities.clear()
@@ -133,6 +150,10 @@ class PlagiarismCheker():
 
     def setThreshold(self, threshold):
         self.threshold = threshold
+
+    def setBaseTree(self, tree):
+        self.baseTreeHash.clear()
+        self.hashBaseTree(tree)
 
     def getReport(self):
         return (self.similarities.copy(), self.fingerprints.copy())
