@@ -1,11 +1,128 @@
 import sys
 
-from PySide2.QtCore import Qt, QPropertyAnimation, QParallelAnimationGroup, QAbstractAnimation
-from PySide2.QtGui import QFont, QPainter, QColor
-from PySide2.QtWidgets import QApplication, QWidget, QListWidget, QTableWidget, QTableWidgetItem, QPushButton, QSlider, QLabel, QGroupBox, QButtonGroup, QRadioButton, QStackedLayout, QVBoxLayout, QHBoxLayout, QGridLayout, QHeaderView, QAbstractItemView, QScrollArea, QFrame, QToolButton, QSizePolicy
+from PySide2.QtCore import Qt, QPropertyAnimation, QParallelAnimationGroup, QAbstractAnimation, QFile, QDir, QRegularExpression
+from PySide2.QtGui import QFont, QPainter, QColor, QTextCursor, QTextCharFormat, QSyntaxHighlighter
+from PySide2.QtWidgets import (
+    QApplication, QWidget, QListWidget, QTableWidget, QTableWidgetItem, QPushButton, QSlider, QLabel, QPlainTextEdit, 
+    QGroupBox, QButtonGroup, QRadioButton, QStackedLayout, QVBoxLayout, QHBoxLayout, QGridLayout, QHeaderView, 
+    QAbstractItemView, QScrollArea, QFrame, QToolButton, QSizePolicy
+)
 
 import SyntaClean
 from clean_parser.abstraction import AbstractionLevel
+
+class ComparisonWindow(QWidget):
+    def __init__(self, file1, file2, parent=None):
+        super().__init__()
+
+        self.setWindowTitle("SyntaClean")
+        self.resize(1200,600)
+        self.setMinimumSize(400,200)
+        self.move(parent.mapToGlobal(parent.pos()))
+        
+        self.qfile1 = QFile(file1)
+        self.qfile1.open(QFile.ReadOnly)
+        text1 = str(self.qfile1.readAll(), 'cp1252')
+
+        self.qfile2 = QFile(file2)
+        self.qfile2.open(QFile.ReadOnly)
+        text2 = str(self.qfile2.readAll(), 'cp1252')
+        
+        self.left = QGroupBox(file1)
+        self.left.setFont(QFont("Helvetica [Cronyx]", 12))
+        self.leftfile = QPlainTextEdit(text1)
+        self.leftfile.setFont(QFont("Helvetica [Cronyx]", 10))
+        self.leftfile.setReadOnly(True)
+        
+        leftLayout = QVBoxLayout()
+        leftLayout.addWidget(self.leftfile)
+        self.left.setLayout(leftLayout)
+
+        self.right = QGroupBox(file2)
+        self.right.setFont(QFont("Helvetica [Cronyx]", 12))
+        self.rightfile = QPlainTextEdit(text2)
+        self.rightfile.setFont(QFont("Helvetica [Cronyx]", 10))
+        self.rightfile.setReadOnly(True)
+
+        self.highlightSimilarities()
+        self.restoreCommentFormat() 
+
+        rightLayout = QVBoxLayout()
+        rightLayout.addWidget(self.rightfile)
+        self.right.setLayout(rightLayout)
+        
+        horizontalLayout = QHBoxLayout()    
+        horizontalLayout.addWidget(self.left)
+        horizontalLayout.addWidget(self.right)
+        self.setLayout(horizontalLayout)
+
+    def highlightSimilarities(self):
+        file1 = QDir.toNativeSeparators(self.qfile1.fileName())
+        file2 = QDir.toNativeSeparators(self.qfile2.fileName())
+        collisions1, collisions2 = SyntaClean.checker.getCollisionsOfTwo(file1, file2)
+
+        if len(collisions1) == 0:
+            return
+
+        textCursorLeft = self.leftfile.textCursor()
+        textCursorRight = self.rightfile.textCursor()
+
+        similarFormat = QTextCharFormat()
+        similarFormat.setForeground(Qt.red)
+
+        for collision1, collision2 in zip(collisions1, collisions2):
+            leftMeta = collision1.meta
+            leftStartLine = leftMeta.line - 1
+            leftStartCol = leftMeta.column - 1
+            leftEndLine = leftMeta.end_line - leftStartLine - 1
+            leftEndCol = leftMeta.end_column - leftStartCol - 1
+
+            textCursorLeft.movePosition(QTextCursor.Down, QTextCursor.MoveAnchor, leftStartLine)
+            textCursorLeft.movePosition(QTextCursor.Right, QTextCursor.MoveAnchor, leftStartCol)
+
+            textCursorLeft.movePosition(QTextCursor.Down, QTextCursor.KeepAnchor, leftEndLine)
+            textCursorLeft.movePosition(QTextCursor.Right, QTextCursor.KeepAnchor, leftEndCol)
+
+            textCursorLeft.setCharFormat(similarFormat)
+            textCursorLeft.setPosition(0)
+
+            rightMeta = collision2.meta
+            rightStartLine = rightMeta.line - 1
+            rightStartCol = rightMeta.column - 1
+            rightEndLine = rightMeta.end_line - rightStartLine - 1
+            rightEndCol = rightMeta.end_column - rightStartCol - 1
+
+            textCursorRight.movePosition(QTextCursor.Down, QTextCursor.MoveAnchor, rightStartLine)
+            textCursorRight.movePosition(QTextCursor.Right, QTextCursor.MoveAnchor, rightStartCol)
+
+            textCursorRight.movePosition(QTextCursor.Down, QTextCursor.KeepAnchor, rightEndLine)
+            textCursorRight.movePosition(QTextCursor.Right, QTextCursor.KeepAnchor, rightEndCol)
+
+            textCursorRight.setCharFormat(similarFormat)
+            textCursorRight.setPosition(0)
+    
+    def restoreCommentFormat(self):
+        textCursorLeft = self.leftfile.textCursor()
+        textCursorRight = self.rightfile.textCursor()
+
+        commentFormat = QTextCharFormat()
+        commentFormat.setForeground(Qt.black)
+        
+        singleLineCommentRegex = QRegularExpression("//[^\n]*")
+        multiLineCommentRegex = QRegularExpression("/\\*([^*]|(\\*+[^/]))*\\*+/")
+
+        crsrs = [textCursorLeft, textCursorRight]
+        texts = [self.leftfile.toPlainText(), self.rightfile.toPlainText()]
+        exprs = [singleLineCommentRegex, multiLineCommentRegex]
+
+        for crsr, text in zip(crsrs, texts):
+            for expr in exprs:
+                iter = expr.globalMatch(text)
+                while iter.hasNext():
+                    match = iter.next()
+                    crsr.setPosition(match.capturedStart(), QTextCursor.MoveAnchor)
+                    crsr.setPosition(match.capturedStart() + match.capturedLength(), QTextCursor.KeepAnchor)
+                    crsr.setCharFormat(commentFormat)        
 
 class ListWidget(QListWidget):
     def __init__(self, placeholderText='', additive=True, parent=None):
@@ -38,7 +155,7 @@ class ListWidget(QListWidget):
             files = []
             for url in event.mimeData().urls():
                 if url.isLocalFile():
-                    files.append(str(url.toLocalFile()))
+                    files.append(QDir.toNativeSeparators(str(url.toLocalFile())))
             self.addItems(files)
         else:
             event.ignore()
@@ -307,6 +424,8 @@ class ResultPageWidget(QWidget):
         scrollLayout.addWidget(self.scrollArea)
         self.setLayout(scrollLayout)
 
+        self.comparisonWindow = None
+
     def setData(self, results, similarities, fingerprints):
         self.createResultsContent(results)
         size = len(similarities)
@@ -315,12 +434,12 @@ class ResultPageWidget(QWidget):
 
         for row in range(size):
             for column in range(size):
-                    similarity = similarities[row][column]
-                    cell = QTableWidgetItem(str(round(similarity * 100)) + "%")
-                    cell.setTextAlignment(Qt.AlignCenter)
-                    color = QColor(min(255, 2*255*(similarity)), min(255, 2*255*(1-similarity)), 0)
-                    cell.setBackgroundColor(color)
-                    self.tableWidget.setItem(row, column, cell)
+                similarity = similarities[row][column]
+                cell = QTableWidgetItem(str(round(similarity * 100)) + "%")
+                cell.setTextAlignment(Qt.AlignCenter)
+                color = QColor(min(255, 2*255*(similarity)), min(255, 2*255*(1-similarity)), 0)
+                cell.setBackgroundColor(color)
+                self.tableWidget.setItem(row, column, cell)
 
         tableHeight = sum([ self.tableWidget.verticalHeader().sectionSize(i) for i in range(min(size,15)) ]) + self.tableWidget.horizontalHeader().height() + 2 * self.tableWidget.frameWidth()
         self.tableWidget.setMinimumHeight(tableHeight)
@@ -353,11 +472,16 @@ class ResultPageWidget(QWidget):
                     text = matchedFile + " (" + str(similarity) + "%)"
                     resultButton = QPushButton(text, self)
                     resultButton.setFont(QFont("Helvetica [Cronyx]", 10))
+                    resultButton.clicked.connect(lambda file1=file, file2=matchedFile: onResultButtonClick(file1, file2))
                     resultLayout.addWidget(resultButton)
 
                 spoiler.setContentLayout(resultLayout)
                 layout.addWidget(spoiler)
         
+        def onResultButtonClick(file1, file2):
+            self.comparisonWindow = ComparisonWindow(file1, file2, self)
+            self.comparisonWindow.show()
+
     def clearLayout(self, layout):
         if layout is not None:
             while layout.count():
@@ -367,6 +491,7 @@ class ResultPageWidget(QWidget):
                     widget.deleteLater()
                 else:
                     self.clearLayout(item.layout())
+
 
     def onMoreInfoClick(self):
         self.moreInfoToggled = True

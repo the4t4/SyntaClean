@@ -1,11 +1,12 @@
 from lark.lexer import Token
 from hashlib import md5
+import copy
 
 from plagiarism_checker.fingerprint import Fingerprint
 from plagiarism_checker.utils import treeSize, IDGenerator
 
 class PlagiarismCheker():
-    def __init__(self, threshold=0.5):
+    def __init__(self, threshold=0.3):
         self.__size = 0
         self.threshold = threshold
         self.hashTable = {}
@@ -114,6 +115,45 @@ class PlagiarismCheker():
         
         return self.results.copy()
     
+    def getCollisionsOfTwo(self, file1, file2):
+        id1 = self.mapFileToID(file1)
+        id2 = self.mapFileToID(file2)
+
+        if id1 == -1 or id2 == -1:
+            return []
+
+        tree = self.fingerprints[id1].node
+
+        collisions1, collisions2 = self.collectCollisionsOfTwo(tree, id1, id2, self.getCollisions()) 
+                
+        return (collisions1, collisions2)
+
+    def collectCollisionsOfTwo(self, tree, id1, id2, collisions):
+        hash = self.hashNode(tree)
+
+        collisions1 = []
+        collisions2 = []
+
+        collision = collisions.get(hash)
+
+        if collision is not None and len(collision[id1]) * len(collision[id2]) > 0:
+            collisions1.append(collision[id1].pop(0).node)
+            collisions2.append(collision[id2].pop(0).node)
+        else:
+            for subtree in tree.children:
+                if type(subtree) is not Token:
+                    result1, result2 = self.collectCollisionsOfTwo(subtree, id1, id2, collisions)
+                    collisions1 += result1
+                    collisions2 += result2
+                
+        return (collisions1, collisions2)
+    
+    def mapFileToID(self, file):
+        for fp in self.fingerprints:
+            if file == fp.file:
+                return fp.id
+        return -1
+    
     def updateSize(self, n):
         self.__size += n
 
@@ -156,7 +196,10 @@ class PlagiarismCheker():
         self.hashBaseTree(tree)
 
     def getReport(self):
-        return (self.similarities.copy(), self.fingerprints.copy())
+        return (copy.deepcopy(self.similarities), copy.deepcopy(self.fingerprints))
 
     def getResults(self):
-        return self.results.copy()
+        return copy.deepcopy(self.results)
+    
+    def getCollisions(self):
+        return copy.deepcopy(self.collisions)

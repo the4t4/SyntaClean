@@ -25,7 +25,7 @@ instance_case   : T_BAR indents operator indents type
                 | T_BAR indents T_ID indents type
 
 type_decl       : T_DOUBLE_COLON indents T_ID (indents type)* indents (T_ASSIGN | T_ALIAS) indents type+ indents (guard indents)*
-type            : T_INT
+?type           : T_INT
                 | T_REAL
                 | T_BOOL
                 | T_ID

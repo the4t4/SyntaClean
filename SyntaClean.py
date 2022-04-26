@@ -1,4 +1,3 @@
-from dataclasses import field
 import sys, os
 
 from clean_parser.parser import CleanParser
@@ -9,13 +8,14 @@ parser = CleanParser(abstractionLevel=AbstractionLevel.NONE)
 checker = PlagiarismCheker(threshold=0.3)
 
 def parseFile(file, generatePng=False):
+    filename = file[:-4]
     extension = file[-4:]
     if extension == ".icl":
         try:
             f = open(file)
             tree = parser.parse(f.read())
             if generatePng:
-                parser.make_png(tree, extension + ".png")
+                parser.make_png(tree, filename + ".png")
             return tree
         except Exception as e:
             print("Could not parse " + file + ":\n" + str(e))
@@ -24,11 +24,11 @@ def parseFile(file, generatePng=False):
 def parseFolder(folder, generatePng=False):
     trees = []
     files = []
-    for filename in os.listdir(folder):
-        file = os.path.join(folder, filename)
-        tree = parseFile(file, generatePng)
+    for file in os.listdir(folder):
+        fileFullPath = os.path.join(folder, file)
+        tree = parseFile(fileFullPath, generatePng)
         trees.append(tree)
-        files.append(file)
+        files.append(fileFullPath)
 
     return (trees, files)
 
