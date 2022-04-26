@@ -270,19 +270,38 @@ class SettingsWidget(QWidget):
         self.threshold.setFont(QFont("Helvetica [Cronyx]", 12))
         self.threshold.setMaximumHeight(100)
 
-        self.sliderValueLabel = QLabel(alignment=Qt.AlignCenter)
-        self.sliderValueLabel.setText("30%")
-        self.slider = QSlider(Qt.Horizontal)
-        self.slider.setMaximum(100)
-        self.slider.setValue(30)
-        self.slider.valueChanged.connect(self.onSliderValueChange)
+        self.thresholdSliderValue = QLabel(alignment=Qt.AlignCenter)
+        self.thresholdSliderValue.setText("30%")
+        self.thresholdSlider = QSlider(Qt.Horizontal)
+        self.thresholdSlider.setMaximum(100)
+        self.thresholdSlider.setValue(30)
+        self.thresholdSlider.valueChanged.connect(self.onThresholdSliderValueChange)
 
         thresholdLayout = QVBoxLayout()
-        thresholdLayout.addWidget(self.sliderValueLabel)
-        thresholdLayout.addWidget(self.slider)
+        thresholdLayout.addWidget(self.thresholdSliderValue)
+        thresholdLayout.addWidget(self.thresholdSlider)
         thresholdLayout.addStretch()
 
         self.threshold.setLayout(thresholdLayout)
+
+        self.granularity = QGroupBox("Match Granularity")
+        self.granularity.setFont(QFont("Helvetica [Cronyx]", 12))
+        self.granularity.setMaximumHeight(100)
+
+        self.granularitySliderValue = QLabel(alignment=Qt.AlignCenter)
+        self.granularitySliderValue.setNum(1)
+        self.granularitySlider = QSlider(Qt.Horizontal)
+        self.granularitySlider.setMinimum(1)
+        self.granularitySlider.setMaximum(10)
+        self.granularitySlider.setValue(1)
+        self.granularitySlider.valueChanged.connect(self.onGranularitySliderValueChange)
+
+        granularityLayout = QVBoxLayout()
+        granularityLayout.addWidget(self.granularitySliderValue)
+        granularityLayout.addWidget(self.granularitySlider)
+        granularityLayout.addStretch()
+
+        self.granularity.setLayout(granularityLayout)
 
         self.abstraction = QGroupBox("Abstraction Level")
         self.abstraction.setFont(QFont("Helvetica [Cronyx]", 12))
@@ -327,13 +346,18 @@ class SettingsWidget(QWidget):
         verticalLayout = QVBoxLayout()
         verticalLayout.addWidget(self.baseFile)
         verticalLayout.addWidget(self.threshold)
+        verticalLayout.addWidget(self.granularity)
         verticalLayout.addWidget(self.abstraction)
         verticalLayout.addWidget(self.buttons)
         self.setLayout(verticalLayout)
     
-    def onSliderValueChange(self, num):
+    def onThresholdSliderValueChange(self, num):
         SyntaClean.checker.setThreshold(num/100)
-        self.sliderValueLabel.setText(str(num) + "%")
+        self.thresholdSliderValue.setText(str(num) + "%")
+
+    def onGranularitySliderValueChange(self, num):
+        SyntaClean.checker.setGranularity(num)
+        self.granularitySliderValue.setNum(num)
     
     def onRadioValueChange(self):
         levelNum = self.radioButtons.checkedId()

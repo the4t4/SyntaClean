@@ -5,7 +5,7 @@ from clean_parser.abstraction import AbstractionLevel
 from plagiarism_checker.checker import PlagiarismCheker
 
 parser = CleanParser(abstractionLevel=AbstractionLevel.NONE)
-checker = PlagiarismCheker(threshold=0.3)
+checker = PlagiarismCheker(threshold=0.3, granularity=1)
 
 def parseFile(file, generatePng=False):
     filename = file[:-4]

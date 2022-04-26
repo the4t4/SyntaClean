@@ -6,9 +6,10 @@ from plagiarism_checker.fingerprint import Fingerprint
 from plagiarism_checker.utils import treeSize, IDGenerator
 
 class PlagiarismCheker():
-    def __init__(self, threshold=0.3):
+    def __init__(self, threshold=0.3, granularity=1):
         self.__size = 0
         self.threshold = threshold
+        self.granularity = granularity
         self.hashTable = {}
         self.baseTreeHash = {}
         self.collisions = {}
@@ -57,7 +58,7 @@ class PlagiarismCheker():
             return
         self.addTreeHash(hash, fingerprint)
         for subtree in fingerprint.node.children:
-            if type(subtree) is not Token:
+            if type(subtree) is not Token and treeSize(subtree) > self.granularity:
                 subfp = Fingerprint(fingerprint.file, fingerprint.id, treeSize(subtree), subtree)
                 self.hashFingerprint(subfp)
     
@@ -95,7 +96,7 @@ class PlagiarismCheker():
                     collidedWeights[i] += collidedWeight
                     blockExtraCollides[i] = True
         for subtree in tree.children:
-            if type(subtree) is not Token:
+            if type(subtree) is not Token and treeSize(subtree) > self.granularity:
                 result = self.calculateCollidedWeights(subtree, id)
                 for i in range(self.__size):
                     if not blockExtraCollides[i]:
@@ -141,7 +142,7 @@ class PlagiarismCheker():
             collisions2.append(collision[id2].pop(0).node)
         else:
             for subtree in tree.children:
-                if type(subtree) is not Token:
+                if type(subtree) is not Token and treeSize(subtree) > self.granularity:
                     result1, result2 = self.collectCollisionsOfTwo(subtree, id1, id2, collisions)
                     collisions1 += result1
                     collisions2 += result2
@@ -190,6 +191,9 @@ class PlagiarismCheker():
 
     def setThreshold(self, threshold):
         self.threshold = threshold
+
+    def setGranularity(self, granularity):
+        self.granularity = granularity
 
     def setBaseTree(self, tree):
         self.baseTreeHash.clear()
