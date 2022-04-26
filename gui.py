@@ -1,15 +1,15 @@
 import sys
 
+import SyntaClean
+from clean_parser.abstraction import AbstractionLevel
+
 from PySide2.QtCore import Qt, QPropertyAnimation, QParallelAnimationGroup, QAbstractAnimation, QFile, QDir, QRegularExpression
-from PySide2.QtGui import QFont, QPainter, QColor, QTextCursor, QTextCharFormat, QSyntaxHighlighter
+from PySide2.QtGui import QFont, QPainter, QColor, QTextCursor, QTextCharFormat, QIcon
 from PySide2.QtWidgets import (
-    QApplication, QWidget, QListWidget, QTableWidget, QTableWidgetItem, QPushButton, QSlider, QLabel, QPlainTextEdit, 
+    QApplication, QMainWindow, QWidget, QListWidget, QTableWidget, QTableWidgetItem, QPushButton, QSlider, QLabel, QPlainTextEdit, 
     QGroupBox, QButtonGroup, QRadioButton, QStackedLayout, QVBoxLayout, QHBoxLayout, QGridLayout, QHeaderView, 
     QAbstractItemView, QScrollArea, QFrame, QToolButton, QSizePolicy
 )
-
-import SyntaClean
-from clean_parser.abstraction import AbstractionLevel
 
 class ComparisonWindow(QWidget):
     def __init__(self, file1, file2, parent=None):
@@ -106,7 +106,7 @@ class ComparisonWindow(QWidget):
         textCursorRight = self.rightfile.textCursor()
 
         commentFormat = QTextCharFormat()
-        commentFormat.setForeground(Qt.black)
+        commentFormat.setForeground(QColor('#a9b7c6'))
         
         singleLineCommentRegex = QRegularExpression("//[^\n]*")
         multiLineCommentRegex = QRegularExpression("/\\*([^*]|(\\*+[^/]))*\\*+/")
@@ -204,7 +204,7 @@ class Spoiler(QWidget):
         headerLine.setFrameShadow(QFrame.Sunken)
         headerLine.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
 
-        self.contentArea.setStyleSheet("QScrollArea { background-color: white; border: none; }")
+        self.contentArea.setStyleSheet("QScrollArea { background-color: #1e1d23; border: none; }")
         self.contentArea.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         # start out collapsed
         self.contentArea.setMaximumHeight(0)
@@ -271,6 +271,7 @@ class SettingsWidget(QWidget):
         self.threshold.setMaximumHeight(100)
 
         self.thresholdSliderValue = QLabel(alignment=Qt.AlignCenter)
+        self.thresholdSliderValue.setFont(QFont("Helvetica [Cronyx]", 12))
         self.thresholdSliderValue.setText("30%")
         self.thresholdSlider = QSlider(Qt.Horizontal)
         self.thresholdSlider.setMaximum(100)
@@ -289,6 +290,7 @@ class SettingsWidget(QWidget):
         self.granularity.setMaximumHeight(100)
 
         self.granularitySliderValue = QLabel(alignment=Qt.AlignCenter)
+        self.granularitySliderValue.setFont(QFont("Helvetica [Cronyx]", 12))
         self.granularitySliderValue.setNum(1)
         self.granularitySlider = QSlider(Qt.Horizontal)
         self.granularitySlider.setMinimum(1)
@@ -309,6 +311,10 @@ class SettingsWidget(QWidget):
         self.radioNone = QRadioButton("None")
         self.radioSimple = QRadioButton("Simple")
         self.radioComplete = QRadioButton("Complete")
+
+        self.radioNone.setFont(QFont("Helvetica [Cronyx]", 12))
+        self.radioSimple.setFont(QFont("Helvetica [Cronyx]", 12)) 
+        self.radioComplete.setFont(QFont("Helvetica [Cronyx]", 12)) 
 
         self.radioButtons = QButtonGroup()
         self.radioButtons.addButton(self.radioNone, 0)
@@ -428,6 +434,7 @@ class ResultPageWidget(QWidget):
         self.tableWidget.hide()
 
         self.listWidget = QListWidget(self)
+        self.listWidget.setFont(QFont("Helvetica [Cronyx]", 10))
         self.listWidget.hide()
 
         self.back = QPushButton('Back', self)
@@ -556,13 +563,9 @@ class ResultPageWidget(QWidget):
 
         parent.stackedLayout.setCurrentIndex(0)
 
-class MainWindow(QWidget):
+class MainWidget(QWidget):
     def __init__(self):
         super().__init__()
- 
-        self.setWindowTitle("SyntaClean")
-        self.resize(1200,600)
-        self.setMinimumSize(400,200)
 
         self.stackedLayout = QStackedLayout()
 
@@ -576,8 +579,31 @@ class MainWindow(QWidget):
         self.mainLayout.addLayout(self.stackedLayout)
         self.setLayout(self.mainLayout)
 
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("SyntaClean")
+        self.setWindowIcon(QIcon("./gui/resources/icon.ico"))
+        self.resize(1200,600)
+        self.setMinimumSize(400,200)
+        widget = MainWidget()
+        self.setCentralWidget(widget)
+
+def getStyleSheet():
+    stream = QFile('./gui/resources/MaterialDark.qss')
+    if stream.open(QFile.ReadOnly):
+        st = str(stream.readAll(), 'ASCII')
+        stream.close()
+    else:
+        print(stream.errorString())
+    return st
+
 def main(argv):
     app = QApplication(argv)
+    app.setStyle("plastique")
+    styleSheet = getStyleSheet()
+
+    app.setStyleSheet(styleSheet)
 
     window = MainWindow()
     window.show()
