@@ -9,7 +9,7 @@ from clean_parser.abstraction import AbstractionLevel, applyAbstr
 
 logger.setLevel(logging.DEBUG)
 
-class FooterIndenter(Indenter):
+class CleanIndenter(Indenter):
     NL_type = 'T_NEWLINE'
     OPEN_PAREN_types = []
     CLOSE_PAREN_types = []
@@ -29,7 +29,7 @@ class CleanParser():
             grammar_filename = "grammars/clean.lark",
             rel_to = __file__,
             parser = parser,
-            postlex = FooterIndenter(),
+            postlex = CleanIndenter(),
             propagate_positions = propagate_positions,
             debug = debug
         )

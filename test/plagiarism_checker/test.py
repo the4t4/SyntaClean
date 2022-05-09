@@ -20,13 +20,13 @@ class TestChecker(TestCase):
             try:
                 f = open(file)
                 tree = parser.parse(f.read())
-                checker.check(tree)
+                checker.check([tree], [file])
             except Exception as e:
                 self.fail("Could not check " + file + ":\n" + str(e))
             f.close()
 
-        assert(len(checker.results) == numOfFiles)
-        assert(len(checker.results[0]) == numOfFiles)
+        assert(len(checker.similarities) == numOfFiles)
+        assert(len(checker.similarities[0]) == numOfFiles)
 
 if __name__ == '__main__':
     if len(sys.argv) == 1:

@@ -1,4 +1,4 @@
-class Fingerprint:
+class Fingerprint():
     def __init__(self, file, id, weight, node):
         self.file = file
         self.id = id

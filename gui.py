@@ -16,6 +16,7 @@ class ComparisonWindow(QWidget):
         super().__init__()
 
         self.setWindowTitle("SyntaClean")
+        self.setWindowIcon(QIcon("./gui/resources/icon.ico"))
         self.resize(1200,600)
         self.setMinimumSize(400,200)
         self.move(parent.mapToGlobal(parent.pos()))
