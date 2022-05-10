@@ -170,7 +170,16 @@ class PlagiarismCheker():
                 vals.append([])
     
     def prettyReport(self):
-        out = "\t" + "\t".join([" " + str(i) for i in range(self.__size)]) + "\n"
+        out = "===== Results =====\n"
+        
+        for key, vals in self.results.items():
+            out += "\n" + key + "\n"
+            for val in vals:
+                if val[1] >= self.threshold:
+                    out += "\t" + val[0] + " " + str(round(val[1] * 100)) + "%\n"
+
+        out += "\n===== Report  =====\n\n"
+        out += "\t" + "\t".join([" " + str(i) for i in range(self.__size)]) + "\n"
         out += "\t" + "\t".join(["----" for _ in range(self.__size)]) + "\n"
         ids = "\n"
         for i in range(self.__size):

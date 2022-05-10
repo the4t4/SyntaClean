@@ -23,3 +23,15 @@ def applyAbstr(tree, abstractionLevel):
         SimpleAbstractor().transform(tree)
     elif abstractionLevel == AbstractionLevel.COMPLETE:
         CompleteAbstractor().transform(tree)
+
+def strToAbstr(string):
+    val = string.lower()
+
+    if val == "none":
+        return AbstractionLevel.NONE
+    elif val == "simple":
+        return AbstractionLevel.SIMPLE
+    elif val == "complete":
+        return AbstractionLevel.COMPLETE
+    else:
+        return None
