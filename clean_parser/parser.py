@@ -1,3 +1,5 @@
+import sys, os
+
 from distutils.log import debug
 import logging
 
@@ -26,7 +28,7 @@ class WhitespaceRemover(Transformer_InPlace):
 class CleanParser():
     def __init__(self, parser = "lalr", abstractionLevel = AbstractionLevel.NONE, propagate_positions = True, debug = False, logLevel = logging.DEBUG):
         self.parser = Lark.open(
-            grammar_filename = "grammars/clean.lark",
+            grammar_filename = os.path.join("grammars", "clean.lark"),
             rel_to = __file__,
             parser = parser,
             postlex = CleanIndenter(),

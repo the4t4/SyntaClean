@@ -1,4 +1,4 @@
-import sys
+import sys, os
 
 import SyntaClean
 from clean_parser.abstraction import AbstractionLevel
@@ -11,12 +11,19 @@ from PySide2.QtWidgets import (
     QAbstractItemView, QScrollArea, QFrame, QToolButton, QSizePolicy
 )
 
+if getattr(sys, 'frozen', False):
+    iconFile = os.path.join(sys._MEIPASS, "gui" + os.sep + "resources" + os.sep + "icon.ico")
+    qssFile = os.path.join(sys._MEIPASS, "gui" + os.sep + "resources" + os.sep + "MaterialDark.qss")
+else:
+    iconFile = "." + os.sep + "gui" + os.sep + "resources" + os.sep + "icon.ico"
+    qssFile = "." + os.sep + "gui" + os.sep + "resources" + os.sep + "MaterialDark.qss"
+
 class ComparisonWindow(QWidget):
     def __init__(self, file1, file2, parent=None):
         super().__init__()
 
         self.setWindowTitle("SyntaClean")
-        self.setWindowIcon(QIcon("./gui/resources/icon.ico"))
+        self.setWindowIcon(QIcon(iconFile))
         self.resize(1200,600)
         self.setMinimumSize(400,200)
         self.move(parent.mapToGlobal(parent.pos()))
@@ -584,14 +591,14 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("SyntaClean")
-        self.setWindowIcon(QIcon("./gui/resources/icon.ico"))
+        self.setWindowIcon(QIcon(iconFile))
         self.resize(1200,600)
         self.setMinimumSize(400,200)
         widget = MainWidget()
         self.setCentralWidget(widget)
 
 def getStyleSheet():
-    stream = QFile('./gui/resources/MaterialDark.qss')
+    stream = QFile(qssFile)
     if stream.open(QFile.ReadOnly):
         st = str(stream.readAll(), 'ASCII')
         stream.close()
