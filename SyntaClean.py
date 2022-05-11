@@ -91,7 +91,6 @@ def main(files):
     for file in files:
         normpath = normalize_path(file)
         if os.path.isdir(normpath):            
-            print(normpath)
             trees, files = parseFolder(normpath)
             allTrees += trees
             allFiles += files
