@@ -9,7 +9,7 @@ parser = CleanParser(abstractionLevel=AbstractionLevel.NONE)
 checker = PlagiarismCheker(threshold=0.3, granularity=1)
 argparser = argparse.ArgumentParser(description="Plagiarism checker for Clean")
 
-argparser.add_argument("files", help="Files or folders where Clean source codes (.icl) reside", action='store', type=str, nargs='+')
+argparser.add_argument("files", help="Files or folders where Clean source code (.icl) resides", action='store', type=str, nargs='+')
 argparser.add_argument("-b", "--basefile", help="Base File containing template code", action='store', type=str, nargs='?')
 argparser.add_argument("-t", "--threshold", help="Similarity threshold for plagiarism", type=int, default=30)
 argparser.add_argument("-g", "--granularity", help="Match granularity", type=int, default=1)
@@ -92,12 +92,14 @@ def main(files):
         normpath = normalize_path(file)
         if os.path.isdir(normpath):            
             trees, files = parseFolder(normpath)
-            allTrees += trees
-            allFiles += files
+            if len(trees) > 0:
+                allTrees += trees
+                allFiles += files
         elif os.path.isfile(file):
             tree = parseFile(normpath)
-            allTrees.append(tree)
-            allFiles.append(normpath)
+            if tree is not None:
+                allTrees.append(tree)
+                allFiles.append(normpath)
 
     results = checker.check(allTrees, allFiles)
     similarities, fingerprints = checker.getReport()

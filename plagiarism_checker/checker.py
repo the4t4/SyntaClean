@@ -130,6 +130,9 @@ class PlagiarismCheker():
         return (collisions1, collisions2)
 
     def collectCollisionsOfTwo(self, tree, id1, id2, collisions):
+        if id1 == id2:
+            return ([tree], [tree]) 
+
         hash = self.hashNode(tree)
 
         collisions1 = []

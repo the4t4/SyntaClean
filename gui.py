@@ -162,9 +162,16 @@ class ListWidget(QListWidget):
 
             files = []
             for url in event.mimeData().urls():
-                if url.isLocalFile():
-                    files.append(QDir.toNativeSeparators(str(url.toLocalFile())))
-            self.addItems(files)
+                file = QDir.toNativeSeparators(str(url.toLocalFile()))
+                ext = file[-4:]
+                if url.isLocalFile() and (ext == ".icl" or QDir(file).exists()):
+                    files.append(file)
+            
+            if len(files) > 0:
+                if self.additive:
+                    self.addItems(files)
+                else:
+                    self.addItem(files[len(files)-1])
         else:
             event.ignore()
     
